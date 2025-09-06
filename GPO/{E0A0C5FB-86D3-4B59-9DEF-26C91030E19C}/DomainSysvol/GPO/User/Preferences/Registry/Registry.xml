@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RegistrySettings clsid="{A3CCFC41-DFDB-43a5-8D26-0FE8B954DA51}"><Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="AutoDetect" status="AutoDetect" image="12" changed="2025-05-03 07:00:43" uid="{071C5AD2-0CBF-4183-9249-1DC617F021C7}"><Properties action="U" displayDecimal="1" default="0" hive="HKEY_CURRENT_USER" key="Software\Microsoft\Windows\CurrentVersion\Internet Settings" name="AutoDetect" type="REG_DWORD" value="00000000"/></Registry>
+</RegistrySettings>

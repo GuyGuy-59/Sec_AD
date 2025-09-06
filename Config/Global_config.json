@@ -1,0 +1,21 @@
+{
+    "RootDN": "DC=serval,DC=int",
+    "AdmName": "ADM",
+    "TierNames": ["Tier0", "Tier1", "Tier2", "Tier1_Legacy"],
+    "SubOUs": ["Admins", "Groups", "Services"],
+    "Tier0and1SubOUs": ["Admins", "Groups", "Servers", "Services"],
+    "DisabledOU": "Disabled",
+    "GPOBackupPath": "GPO",
+    "TargetDomain": "serval.int",
+    "Functions": {
+        "InitializeADStructure": true,
+        "ImportSecurityHardeningGPOs": true,
+        "ApplyGPOsToTiers": true,
+        "SetADSIUnauthenticatedBind": true,
+        "SetmsDSMachineAccountQuota": true,
+        "SetmsDSSupportedEncryptionTypes-krbtgt": true,
+        "EnableRecycleBin": true,
+        "EnableLAPS": true,
+        "EnableBitlocker": true
+    }
+} 
