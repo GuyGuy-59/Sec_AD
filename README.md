@@ -1,76 +1,84 @@
 # Active Directory Tiered Administration Structure
 
-This PowerShell project automates a secure, tiered administration model for Active Directory (Tier 0/1/2), including OU layout, groups/permissions, and a curated set of hardening GPOs aligned with best practices.
+This PowerShell project automates the deployment of a secure, tiered administration model for Active Directory (Tier 0/1/2), including OU layout, groups/permissions, and curated hardening GPOs aligned with industry best practices.
 
-## Table of contents
+---
 
-- Quickstart
-- Features
-- Prerequisites
-- Installation
-- Configuration (with examples)
-- GPO Documentation (catalog and verification)
-- Usage
-- Module Structure
-- Security Considerations
-- Error Handling
+## 📑 Table of Contents
+- [Quickstart](#quickstart)  
+- [Features](#features)  
+- [Prerequisites](#prerequisites)  
+- [Installation](#installation)  
+- [Configuration](#configuration)  
+  - [Configuration Options](#configuration-options)  
+- [GPO Documentation](#gpo-documentation)  
+- [Tier Customization](#tier-customization)  
+  - [Usage Modes](#usage-modes)  
+  - [Customization Example](#customization-example)  
+- [Usage](#usage)  
+- [Module Structure](#module-structure)  
+- [Security Considerations](#security-considerations)  
+- [Error Handling](#error-handling)  
+- [TODO](#todo)  
 
-## Quickstart
+---
 
-1. Update `Config\Global_config.json` for your environment (see Configuration).
-2. Ensure GPO backups exist in `GPO/` (GUID folders with `gpreport.xml`).
-3. Open PowerShell as Administrator and run:
+## 🚀 Quickstart
+
+1. Update `Config\Global_config.json` for your environment (see [Configuration](#configuration)).  
+2. Ensure GPO backups exist in `GPO/` (GUID folders with `gpreport.xml`).  
+3. Open PowerShell as Administrator and run:  
+
    ```powershell
    .\build_Tiers.ps1
    ```
-4. Review imported GPOs and link them to the appropriate OUs.
 
-## Features
+4. Review imported GPOs and link them to the appropriate OUs.  
 
-- **Tiered Administrative Structure**
-  - Creates separate administrative tiers (Tier 0, Tier 1, Tier 2, Tier1_Legacy)
-  - Implements dedicated OUs for each tier
-  - Sets up appropriate security groups and permissions
-  - Create Local Groups for Administration LAPS-Pwd-Read
+---
 
-- **GPO Management**
-  - Imports Group Policy Objects (GPOs) based on the forest functional level (2016/2025)
-  - Configures security settings for each tier
-  - [!] Warning: After import, add `DOMAIN\LAPS-Pwd-Read` to LAPS “Configure authorized password decryptors”
+## ✨ Features
 
-- **Security Hardening**
-  - Configures ADSI unauthenticated bind settings
-  - Implements proper security group structure
-  - Sets Machine Account Quota to secure value
-  - Enables Active Directory Recycle Bin
-  - Configures Local Administrator Password Solution (LAPS)
-  - Creates dedicated LAPS password reader groups
+### Tiered Administrative Structure
+- Creates dedicated tiers: **Tier 0, Tier 1, Tier 2, Tier1_Legacy**  
+- Deploys OUs per tier  
+- Configures security groups and permissions  
+- Creates local admin groups for LAPS password readers  
 
-## Prerequisites
+### GPO Management
+- Imports GPOs based on forest functional level (2016/2025)  
+- Configures tier-specific security settings  
+- ⚠️ **Important:** After import, add `DOMAIN\LAPS-Pwd-Read` to LAPS *“Configure authorized password decryptors”*  
 
-- Windows Server with Active Directory Domain Services
-- PowerShell 5.1 or higher
-- Active Directory PowerShell module
-- Group Policy PowerShell module
-- Domain Administrator privileges
+### Security Hardening
+- Configures ADSI unauthenticated bind  
+- Implements hardened security group structure  
+- Sets Machine Account Quota to a secure value  
+- Enables AD Recycle Bin  
+- Configures Local Administrator Password Solution (LAPS)  
+- Creates dedicated password reader groups  
 
-## Prerequisites
+---
 
-- Windows Server with Active Directory Domain Services
-- PowerShell 5.1 or higher
-- Active Directory and Group Policy PowerShell modules
-- Domain Administrator privileges
+## 📋 Prerequisites
+- Windows Server with Active Directory Domain Services  
+- PowerShell **5.1+**  
+- Active Directory PowerShell module  
+- Group Policy PowerShell module  
+- Domain Administrator privileges  
 
-## Installation
+---
 
-1. Clone or download this repository
-2. Ensure all required PowerShell modules are installed
-3. Modify the `Config\Global_config.json` file according to your environment
+## ⚙️ Installation
+1. Clone or download this repository.  
+2. Ensure all required PowerShell modules are installed.  
+3. Adjust `Config\Global_config.json` for your environment.  
 
-## Configuration
+---
 
-The `Config\Global_config.json` file contains all the configuration settings:
+## 🛠️ Configuration
 
+### Global Settings (`Global_config.json`)
 ```json
 {
     "RootDN": "DC=serval,DC=int",
@@ -82,14 +90,12 @@ The `Config\Global_config.json` file contains all the configuration settings:
     "GPOBackupPath": "gpo",
     "TargetDomain": "serval.int",
     "Functions": {
-        "InitializeADStructure": true,
-        ...
+        "InitializeADStructure": true
     }
 }
 ```
 
-The `Config\GPO_config.json` file lists which GPOs are imported for each functional level:
-
+### GPO Selection (`GPO_config.json`)
 ```json
 {
     "GPOs": {
@@ -100,153 +106,116 @@ The `Config\GPO_config.json` file lists which GPOs are imported for each functio
                 "Bloodhound-Mitigation",
                 "IPv6-Disabled",
                 "Kerberos-AES-Enabled",
-                "Kerberos-Armoring-Enabled",
-                "LAPS-Enabled",
-                "LDAP-CBT-Enabled",
                 ...
             ]
         },
         "Level2016": {
             "description": "GPOs for Windows 2016 and below",
-            "gpos": [
-                "LMHASH-Disabled"
-            ]
+            "gpos": ["LMHASH-Disabled"]
         },
         "Level2025": {
             "description": "GPOs for Windows 2025 and above",
-            "gpos": [
-                "SMB-NTLM-Disabled"
-            ]
+            "gpos": ["SMB-NTLM-Disabled"]
         }
     }
 }
 ```
 
 ### Configuration Options
+- **RootDN**: Root DN of your AD domain  
+- **AdmName**: Administrative structure prefix  
+- **TierNames**: Tiers to deploy  
+- **SubOUs**: Standard OUs for Tier 2  
+- **Tier0and1SubOUs**: Extended OUs for Tier 0 & 1  
+- **DisabledOU**: OU name for disabled accounts  
+- **GPOBackupPath**: Path to GPO backups  
+- **TargetDomain**: Domain FQDN  
+- **Functions**: Enable/disable individual functions  
 
-- `RootDN`: The root DN of your Active Directory domain
-- `AdmName`: Name for the administrative structure
-- `TierNames`: Array of tier names to create
-- `SubOUs`: Standard OUs to create in Tier 2
-- `Tier0and1SubOUs`: Additional OUs for Tier 0 and Tier 1
-- `DisabledOU`: Name for the disabled accounts OU
-- `GPOBackupPath`: Path to GPO backup files
-- `TargetDomain`: Target domain name
-- `Functions`: Toggle individual functions on/off
+---
 
-## GPO Documentation
+## 📚 GPO Documentation
+See [`gpo.md`](gpo.md) for:  
+- Full catalog of available GPOs  
+- Verified settings extracted from `gpreport.xml`  
+- Recommended linking per tier  
 
-For a detailed catalog of all provided GPOs, verified settings from backups, and recommended linking, see: [`gpo.md`](gpo.md).
+---
 
-Highlights:
-- Mapping by level (Common, 2016, 2025)
-- Verified parameters pulled from `gpreport.xml`
-- Recommended linking by tier (Tier 0/1/2)
+## 🎯 Tier Customization
 
-## Tier Customization
-
-The GPO configuration now supports flexible tier-based mappings through the `Config\GPO_config.json` file. This allows you to customize which GPOs are applied to each administrative tier.
-
-### Configuration Structure
-
-The `TierMappings` section in `GPO_config.json` defines GPO assignments for each tier:
-
+### TierMappings Example
 ```json
 {
     "TierMappings": {
         "Tier0": {
-            "description": "GPOs for Tier 0 (Domain Controllers, PAW)",
-            "gpos": [
-                "Applocker-Enabled",
-                "Bitlocker-Enabled",
-                "Bloodhound-Mitigation",
-                // ... other GPOs
-            ]
+            "description": "Domain Controllers, PAW",
+            "gpos": ["Applocker-Enabled", "Bitlocker-Enabled", "Bloodhound-Mitigation"]
         },
         "Tier1": {
-            "description": "GPOs for Tier 1 (Administrative Servers)",
-            "gpos": [
-                "Applocker-Enabled",
-                "Bitlocker-Enabled",
-                // ... other GPOs
-            ]
+            "description": "Administrative Servers",
+            "gpos": ["Applocker-Enabled", "Bitlocker-Enabled"]
         },
         "Tier2": {
-            "description": "GPOs for Tier 2 (Workstations, Users)",
-            "gpos": [
-                "Applocker-Enabled",
-                "Bitlocker-Enabled",
-                "Logs-Advanced-Workstation-Enabled",
-                // ... other GPOs
-            ]
-        },
-        "Tier1_Legacy": {
-            "description": "GPOs for Tier 1 Legacy (Legacy Administrative Servers)",
-            "gpos": [
-                "Applocker-Enabled",
-                "Bitlocker-Enabled",
-                // ... other GPOs
-            ]
+            "description": "Workstations, Users",
+            "gpos": ["Applocker-Enabled", "Bitlocker-Enabled", "Logs-Advanced-Workstation-Enabled"]
         }
     }
 }
 ```
 
 ### Usage Modes
+- **Full AD Deployment** (`InitializeADStructure = true`)  
+  → Creates AD structure **and** applies tier mappings.  
+- **GPO Import Only** (`InitializeADStructure = false`)  
+  → Imports only the configured GPO sets (Common/2016/2025).  
 
-- **With AD Structure** (`InitializeADStructure = true`): 
-  - Creates the AD structure
-  - Applies GPOs according to the `TierMappings` configuration
-- **Import Only** (`InitializeADStructure = false`): 
-  - Imports GPOs according to the `GPOs` configuration (Common, Level2016, Level2025)
-
-### Customization Example
-
-To add a new GPO specific to Tier 0:
-
+### Adding a Custom GPO
 ```json
 "Tier0": {
-    "description": "GPOs for Tier 0 (Domain Controllers, PAW)",
+    "description": "Domain Controllers, PAW",
     "gpos": [
         "Applocker-Enabled",
         "Bitlocker-Enabled",
-        "New-Security-GPO",  // <- New GPO added
-        // ... other GPOs
+        "New-Security-GPO"  // custom GPO
     ]
 }
 ```
 
-## Usage
+---
 
-1. Open PowerShell as Administrator
-2. Navigate to the project directory
-3. Run the main script:
+## ▶️ Usage
 ```powershell
 .\build_Tiers.ps1
 ```
 
-## Module Structure
+---
 
-- `Common.psm1`: Common functions for OU and group creation
-- `GPO.psm1`: GPO import and management functions
-- `ADSecurity.psm1`: AD Security functions
-- `ADStructure.psm1`: Main AD structure creation functions
+## 🧩 Module Structure
+- **Common.psm1** → OU & group creation helpers  
+- **GPO.psm1** → GPO import & management  
+- **ADSecurity.psm1** → Security-related functions  
+- **ADStructure.psm1** → AD structure deployment  
 
-## Security Considerations
+---
 
-- The script requires Domain Administrator privileges
-- Review the GPO settings before importing
-- Ensure proper backup before running in production
-- Test in a lab environment first
+## 🔐 Security Considerations
+- Requires **Domain Administrator** rights  
+- Review GPOs before applying  
+- Always test in a lab before production  
+- Ensure full AD backups are available  
 
-## Error Handling
+---
 
-The script includes comprehensive error handling:
-- Validates configuration before execution
-- Checks for required modules and functions
-- Provides detailed error messages
-- Graceful failure handling
+## ⚠️ Error Handling
+- Validates config files before execution  
+- Checks for required modules/functions  
+- Provides descriptive error messages  
+- Graceful exit on failure  
 
+---
 
-## TODO
-
+## 📝 TODO
+- Add advanced reporting for applied GPOs  
+- Improve rollback/restore support  
+- Extend compatibility with hybrid environments  
