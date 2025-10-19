@@ -37,6 +37,41 @@ This PowerShell project automates the deployment of a secure, tiered administrat
 
 ---
 
+## 🏗️ Architecture
+
+This project implements a **Tiered Administration Model** for Active Directory, following Microsoft's security best practices:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Domain Root (DC=serval,DC=int)          │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─ _ADM (Administrative Structure)                        │
+│  │  ├─ Tier0 (Domain Controllers, PAW)                    │
+│  │  ├─ Tier1 (Administrative Servers)                     │
+│  │  ├─ Tier2 (Workstations, Users)                        │
+│  │  └─ Tier1_Legacy (Legacy Systems)                      │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─ _Tier0 (Production Tiers)                              │
+│  │  ├─ PAW/Disabled                                        │
+│  │  └─ Groups/Admins/Servers/Services/Disabled             │
+│  ├─ _Tier1                                                 │
+│  │  └─ Groups/Admins/Servers/Services/Disabled             │
+│  ├─ _Tier2                                                 │
+│  │  ├─ Users/Workstations/Disabled                         │
+│  │  └─ Admins/Groups/Services/Disabled                     │
+│  └─ _Tier1_Legacy                                          │
+│      └─ Groups/Admins/Servers/Services/Disabled             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Security Model
+- **Tier 0**: Domain Controllers, PAW (Privileged Access Workstations)
+- **Tier 1**: Administrative servers, management tools
+- **Tier 2**: End-user workstations and regular servers
+- **Tier1_Legacy**: Legacy administrative systems requiring compatibility
+
+---
+
 ## ✨ Features
 
 ### Tiered Administrative Structure
@@ -165,34 +200,51 @@ See [`gpo.md`](gpo.md) for:
 ```
 
 ### Usage Modes
-- **Full AD Deployment** (`InitializeADStructure = true`)  
-  → Creates AD structure **and** applies tier mappings.  
-- **GPO Import Only** (`InitializeADStructure = false`)  
-  → Imports only the configured GPO sets (Common/2016/2025).  
 
-<<<<<<< HEAD
-- **With AD Structure** (`InitializeADStructure = true`): 
-  - Creates the AD structure
+- **Full AD Deployment** (`InitializeADStructure = true`)  
+  - Creates AD structure **and** applies tier mappings
   - **Imports GPOs** according to the `GPOs` configuration (Common, Level2016, Level2025)
   - **Applies GPOs** according to the `TierMappings` configuration to specific tier OUs
-- **Import Only** (`InitializeADStructure = false`): 
+- **GPO Import Only** (`InitializeADStructure = false`)  
   - Imports GPOs according to the `GPOs` configuration (Common, Level2016, Level2025)
   - **Note**: GPOs are imported globally and must be manually linked to OUs
 
 ### Execution Order
 
 When `InitializeADStructure = true`, the script executes in this order:
-1. **InitializeADStructure** - Creates tier OUs and security groups
-2. **ImportSecurityHardeningGPOs** - Imports GPOs from backup files into the domain
-3. **ApplyGPOsToTiers** - Links imported GPOs to appropriate tier OUs based on TierMappings
 
-### Customization Example
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Script Execution Flow                    │
+├─────────────────────────────────────────────────────────────┤
+│  1. InitializeADStructure                                   │
+│     ├─ Create _ADM structure                               │
+│     ├─ Create _Tier0, _Tier1, _Tier2, _Tier1_Legacy OUs   │
+│     ├─ Create sub-OUs (Admins, Groups, Services, etc.)     │
+│     └─ Create security groups (Tier_Users, LAPS-Pwd-Read)  │
+├─────────────────────────────────────────────────────────────┤
+│  2. ImportSecurityHardeningGPOs                            │
+│     ├─ Read GPO_config.json                                │
+│     ├─ Determine functional level (2016/2025)              │
+│     ├─ Select GPOs to import (Common + Level-specific)     │
+│     └─ Import GPOs from backup files to domain             │
+├─────────────────────────────────────────────────────────────┤
+│  3. ApplyGPOsToTiers                                       │
+│     ├─ Read TierMappings from GPO_config.json             │
+│     ├─ For each tier:                                      │
+│     │   ├─ Verify tier OU exists                           │
+│     │   ├─ Get GPOs for this tier                          │
+│     │   └─ Link GPOs to tier OU                            │
+│     └─ Report success/failures                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-To add a new GPO specific to Tier 0:
+**Key Points:**
+- GPOs are **always imported** before being applied to tiers
+- Each tier gets its specific GPOs based on `TierMappings`
+- The script validates OUs exist before linking GPOs
 
-=======
 ### Adding a Custom GPO
->>>>>>> 85b2287034703e4b2c4e673f9cb9e6c87192af80
 ```json
 "Tier0": {
     "description": "Domain Controllers, PAW",
@@ -207,9 +259,30 @@ To add a new GPO specific to Tier 0:
 ---
 
 ## ▶️ Usage
+
+### Basic Usage
 ```powershell
+# Run as Domain Administrator
 .\build_Tiers.ps1
 ```
+
+### Advanced Usage
+```powershell
+# Check configuration first
+Get-Content .\Config\Global_config.json | ConvertFrom-Json
+
+# Run with verbose output
+.\build_Tiers.ps1 -Verbose
+
+# Check GPO status after execution
+Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
+```
+
+### Post-Execution Steps
+1. **Verify GPO Links**: Check that GPOs are properly linked to tier OUs
+2. **Configure LAPS**: Add `DOMAIN\LAPS-Pwd-Read` to LAPS decryptors
+3. **Test Policies**: Verify GPOs are applying correctly
+4. **Review Logs**: Check PowerShell execution logs for any warnings
 
 ---
 
@@ -237,7 +310,35 @@ To add a new GPO specific to Tier 0:
 
 ---
 
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**GPOs not found during tier application:**
+- Ensure GPOs are imported first (`ImportSecurityHardeningGPOs = true`)
+- Check that GPO backup files exist in the specified path
+- Verify GPO names match exactly in `GPO_config.json`
+
+**OU not found errors:**
+- Ensure `InitializeADStructure = true` is set
+- Check that `RootDN` is correct for your domain
+- Verify tier names match between `Global_config.json` and `GPO_config.json`
+
+**Permission errors:**
+- Run PowerShell as Domain Administrator
+- Ensure you have GPO creation and linking permissions
+- Check that the target domain is accessible
+
+### Debug Mode
+```powershell
+# Enable detailed logging
+$VerbosePreference = "Continue"
+.\build_Tiers.ps1
+```
+
 ## 📝 TODO
-- Add advanced reporting for applied GPOs  
-- Improve rollback/restore support  
-- Extend compatibility with hybrid environments  
+- [ ] Add advanced reporting for applied GPOs  
+- [ ] Improve rollback/restore support  
+- [ ] Extend compatibility with hybrid environments
+- [ ] Add GPO validation before import
+- [ ] Create automated testing framework  
