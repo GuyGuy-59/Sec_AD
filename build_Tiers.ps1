@@ -71,11 +71,6 @@ function Invoke-Functions {
                 continue
             }
             
-            if ($key -eq "ImportSecurityHardeningGPOs" -and $initializeADStructure) {
-                Write-Host "[!] Skipping $key (InitializeADStructure is enabled, GPOs will be applied to tiers instead)" -ForegroundColor Yellow
-                continue
-            }
-            
             try { $functionMappings[$key].Invoke() } catch {
                 Write-Error ("[X] Execution failed for " + $key + ": " + $_.Exception.Message)
                 exit 1

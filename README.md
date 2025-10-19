@@ -196,9 +196,18 @@ The `TierMappings` section in `GPO_config.json` defines GPO assignments for each
 
 - **With AD Structure** (`InitializeADStructure = true`): 
   - Creates the AD structure
-  - Applies GPOs according to the `TierMappings` configuration
+  - **Imports GPOs** according to the `GPOs` configuration (Common, Level2016, Level2025)
+  - **Applies GPOs** according to the `TierMappings` configuration to specific tier OUs
 - **Import Only** (`InitializeADStructure = false`): 
   - Imports GPOs according to the `GPOs` configuration (Common, Level2016, Level2025)
+  - **Note**: GPOs are imported globally and must be manually linked to OUs
+
+### Execution Order
+
+When `InitializeADStructure = true`, the script executes in this order:
+1. **InitializeADStructure** - Creates tier OUs and security groups
+2. **ImportSecurityHardeningGPOs** - Imports GPOs from backup files into the domain
+3. **ApplyGPOsToTiers** - Links imported GPOs to appropriate tier OUs based on TierMappings
 
 ### Customization Example
 
