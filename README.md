@@ -30,7 +30,7 @@ This PowerShell project automates the deployment of a secure, tiered administrat
 3. Open PowerShell as Administrator and run:  
 
    ```powershell
-   .\build_Tiers.ps1
+   .\sec_ad.ps1
    ```
 
 4. Review imported GPOs and link them to the appropriate OUs.  
@@ -263,7 +263,7 @@ When `InitializeADStructure = true`, the script executes in this order:
 ### Basic Usage
 ```powershell
 # Run as Domain Administrator
-.\build_Tiers.ps1
+.\sec_ad.ps1
 ```
 
 ### Advanced Usage
@@ -272,7 +272,7 @@ When `InitializeADStructure = true`, the script executes in this order:
 Get-Content .\Config\Global_config.json | ConvertFrom-Json
 
 # Run with verbose output
-.\build_Tiers.ps1 -Verbose
+.\sec_ad.ps1 -Verbose
 
 # Check GPO status after execution
 Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
@@ -333,7 +333,7 @@ Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
 ```powershell
 # Enable detailed logging
 $VerbosePreference = "Continue"
-.\build_Tiers.ps1
+.\sec_ad.ps1
 ```
 
 ## 📝 TODO
