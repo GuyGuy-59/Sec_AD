@@ -14,7 +14,7 @@ This PowerShell project automates the deployment of a secure, tiered administrat
 - [GPO Documentation](#gpo-documentation)  
 - [Tier Customization](#tier-customization)  
   - [Usage Modes](#usage-modes)  
-  - [Customization Example](#customization-example)  
+  - [TierMappings Example](#tiermappings-example)  
 - [Usage](#usage)  
 - [Module Structure](#module-structure)  
 - [Security Considerations](#security-considerations)  
@@ -23,6 +23,7 @@ This PowerShell project automates the deployment of a secure, tiered administrat
 
 ---
 
+<a id="quickstart"></a>
 ## 🚀 Quickstart
 
 1. Update `Config\Global_config.json` for your environment (see [Configuration](#configuration)).  
@@ -37,29 +38,30 @@ This PowerShell project automates the deployment of a secure, tiered administrat
 
 ---
 
+<a id="architecture"></a>
 ## 🏗️ Architecture
 
 This project implements a **Tiered Administration Model** for Active Directory, following Microsoft's security best practices:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Domain Root (DC=serval,DC=int)          │
+│                    Domain Root (DC=serval,DC=int)           │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌─ _ADM (Administrative Structure)                        │
-│  │  ├─ Tier0 (Domain Controllers, PAW)                    │
-│  │  ├─ Tier1 (Administrative Servers)                     │
-│  │  ├─ Tier2 (Workstations, Users)                        │
-│  │  └─ Tier1_Legacy (Legacy Systems)                      │
+│  ┌─ _ADM (Administrative Structure)                         │
+│  │  ├─ Tier0 (Domain Controllers, PAW)                      │
+│  │  ├─ Tier1 (Administrative Servers)                       │
+│  │  ├─ Tier2 (Workstations, Users)                          │
+│  │  └─ Tier1_Legacy (Legacy Systems)                        │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌─ _Tier0 (Production Tiers)                              │
-│  │  ├─ PAW/Disabled                                        │
-│  │  └─ Groups/Admins/Servers/Services/Disabled             │
-│  ├─ _Tier1                                                 │
-│  │  └─ Groups/Admins/Servers/Services/Disabled             │
-│  ├─ _Tier2                                                 │
-│  │  ├─ Users/Workstations/Disabled                         │
-│  │  └─ Admins/Groups/Services/Disabled                     │
-│  └─ _Tier1_Legacy                                          │
+│  ┌─ _Tier0 (Production Tiers)                               │
+│  │  ├─ PAW/Disabled                                         │
+│  │  └─ Groups/Admins/Servers/Services/Disabled              │
+│  ├─ _Tier1                                                  │
+│  │  └─ Groups/Admins/Servers/Services/Disabled              │
+│  ├─ _Tier2                                                  │
+│  │  ├─ Users/Workstations/Disabled                          │
+│  │  └─ Admins/Groups/Services/Disabled                      │
+│  └─ _Tier1_Legacy                                           │
 │      └─ Groups/Admins/Servers/Services/Disabled             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -72,6 +74,7 @@ This project implements a **Tiered Administration Model** for Active Directory, 
 
 ---
 
+<a id="features"></a>
 ## ✨ Features
 
 ### Tiered Administrative Structure
@@ -95,6 +98,7 @@ This project implements a **Tiered Administration Model** for Active Directory, 
 
 ---
 
+<a id="prerequisites"></a>
 ## 📋 Prerequisites
 - Windows Server with Active Directory Domain Services  
 - PowerShell **5.1+**  
@@ -104,6 +108,7 @@ This project implements a **Tiered Administration Model** for Active Directory, 
 
 ---
 
+<a id="installation"></a>
 ## ⚙️ Installation
 1. Clone or download this repository.  
 2. Ensure all required PowerShell modules are installed.  
@@ -111,6 +116,7 @@ This project implements a **Tiered Administration Model** for Active Directory, 
 
 ---
 
+<a id="configuration"></a>
 ## 🛠️ Configuration
 
 ### Global Settings (`Global_config.json`)
@@ -169,14 +175,16 @@ This project implements a **Tiered Administration Model** for Active Directory, 
 
 ---
 
+<a id="gpo-documentation"></a>
 ## 📚 GPO Documentation
-See [`gpo.md`](gpo.md) for:  
+See [gpo.md](gpo.md) for:  
 - Full catalog of available GPOs  
 - Verified settings extracted from `gpreport.xml`  
 - Recommended linking per tier  
 
 ---
 
+<a id="tier-customization"></a>
 ## 🎯 Tier Customization
 
 ### TierMappings Example
@@ -258,6 +266,7 @@ When `InitializeADStructure = true`, the script executes in this order:
 
 ---
 
+<a id="usage"></a>
 ## ▶️ Usage
 
 ### Basic Usage
@@ -286,6 +295,7 @@ Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
 
 ---
 
+<a id="module-structure"></a>
 ## 🧩 Module Structure
 - **Common.psm1** → OU & group creation helpers  
 - **GPO.psm1** → GPO import & management  
@@ -294,6 +304,7 @@ Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
 
 ---
 
+<a id="security-considerations"></a>
 ## 🔐 Security Considerations
 - Requires **Domain Administrator** rights  
 - Review GPOs before applying  
@@ -302,6 +313,7 @@ Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
 
 ---
 
+<a id="error-handling"></a>
 ## ⚠️ Error Handling
 - Validates config files before execution  
 - Checks for required modules/functions  
@@ -310,6 +322,7 @@ Get-GPO -All | Where-Object {$_.DisplayName -like "*Security*"}
 
 ---
 
+<a id="troubleshooting"></a>
 ## 🚨 Troubleshooting
 
 ### Common Issues
@@ -336,6 +349,7 @@ $VerbosePreference = "Continue"
 .\sec_ad.ps1
 ```
 
+<a id="todo"></a>
 ## 📝 TODO
 - [ ] Add advanced reporting for applied GPOs  
 - [ ] Improve rollback/restore support  
