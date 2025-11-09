@@ -55,6 +55,9 @@ This document catalogs the Group Policy Objects included in this repository. It 
   - WPAD-Computer-Disabled
   - WPAD-User-Disabled
   - WScript-Disabled
+  - LSA-Hardened
+  - MSCache-NLIterationCount-Hardened
+  - VBS-Enabled
 
 - Level2016 (Windows Server 2016 and below):
   - LMHASH-Disabled
@@ -85,11 +88,13 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 | [LDAP-Client-Signing-Required](#ldap-client-signing-required) | Common | Require LDAP signing (client) | {56653B16-88E2-4947-BF25-B9E90838CBCB} | Yes |
 | [LDAP-Server-Signing-Required](#ldap-server-signing-required) | Common | Require LDAP signing (DC) | {5DC701B5-4706-4B72-A3EF-959EC7A9CCB2} | Yes |
 | [LLMNR-Disabled](#llmnr-disabled) | Common | Turn off multicast name resolution: Enabled | {D386A8E5-6739-400B-9D96-027DDFCD0252} | Yes |
+| [LSA-Hardened](#lsa-hardened) | Common | HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\RunAsPPL = 2 | {4D282735-FCEB-400F-9D9B-ED26F59E2DF9} | Yes |
 | [LMHASH-Disabled](#lmhash-disabled) | Level2016 | HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\NoLMHash = 1 | {5DA34663-85C7-4EBA-9AFE-63B6CE5A9D5B} | Yes |
 | [Logs-Advanced-Server-Enabled](#logs-advanced-server-enabled) | Common | Advanced Audit: Logon=Success/Failure, ProcCreation=Success, Kerberos=Success, File Share=Success/Failure, more | {84C66152-0AA5-42EF-8CA1-7D4476BEB88E} | Yes |
 | [Logs-Advanced-Workstation-Enabled](#logs-advanced-workstation-enabled) | Common | Advanced Audit (workstations) incl. Logon, ProcCreation, File Share, etc. | {950CB7EF-E5E4-4F22-834E-BB845BB33652} | Yes |
 | [mDNS-Disabled](#mdns-disabled) | Common | HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\EnableMDNS = 0 | {34EFE6F0-1266-4EF9-B52C-1B3D4FF0713B} | Yes |
 | [MSCache-Disabled](#mscache-disabled) | Common | CachedLogonsCount = 1 | {33CE3E1D-8AFD-4A96-A89C-CF9776A8C67F} | Yes |
+| [MSCache-NLIterationCount-Hardened](#mscache-nliterationcount-hardened) | Common | HKLM\\SECURITY\\Cache\\NL$IterationCount = 0x7A2 (1954) | {5E37A7CB-CBE5-40B6-A11E-9572BEAE0050} | Yes |
 | [NBT-NS-Disabled](#nbt-ns-disabled) | Level2016 | PowerShell script: NBT-NS-Disabled.ps1 (Startup) | {6CDB3BDF-A907-4DF8-8678-AA3D962761C5} | Yes |
 | [NBT-NS-New-Disabled](#nbt-ns-new-disabled) | Level2025 | Configure NetBIOS settings: Disable NetBIOS name resolution | {D04765E7-21F8-4262-BF17-BA6915EA3E3C} | Yes |
 | [NTLM-Audit-Enabled](#ntlm-audit-enabled) | Common | AuditReceivingNTLMTraffic=Enable all; Netlogon AuditNTLMInDomain=Enable all | {C4614F9E-8588-4538-9D4B-79A9D7B78FC5} | Yes |
@@ -113,6 +118,7 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 | [TLS-Hardened](#tls-hardened) | Common | Disable SSL 3.0 and TLS 1.0/1.1 (Client/Server); set DisabledByDefault=1 | {C3114819-BA13-42DF-9123-049D7AFB83E7} | Yes |
 | [UAC-Hardened](#uac-hardened) | Common | EnableLUA=1; PromptOnSecureDesktop=1; FilterAdministratorToken=1; ConsentPromptBehaviorAdmin=2; ConsentPromptBehaviorUser=1; EnableVirtualization=1 | {950CB7EF-E5E4-4F22-834E-BB845BB33652} | Yes |
 | [UNC-Paths-Hardened](#unc-paths-hardened) | Common | \\*\\SYSVOL and \\*\\NETLOGON: RequireMutualAuthentication=1, RequireIntegrity=1 | {88D3A452-EE6A-43FD-9318-E35139F67AF9} | Yes |
+| [VBS-Enabled](#vbs-enabled) | Common | Virtualization Based Security: Code Integrity + Credential Guard enabled with UEFI lock; Secure Launch; Kernel Stack Protection | {C2945E69-15BF-47C7-9277-85E9C0ADC26B} | Yes |
 | [Wdigest-Disabled](#wdigest-disabled) | Common | HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest\\UseLogonCredential = 0 | {58F19C43-E9A3-4FB4-83B3-60775BD54BE2} | Yes |
 | [WebProxyAutoDiscovery-Disabled](#webproxyautodiscovery-disabled) | Common | WinHttpAutoProxySvc Start=4; AutoDetect=0 | {11BBFDC3-5A7E-495B-A275-98F9D6CA666B} | Yes |
 | [WPAD-Computer-Disabled](#wpad-computer-disabled) | Common | HKLM\\...\\WinHttp\\DisableWpad = 1 | {C82210F2-407C-49FB-A2AF-F394EFEE5AC2} | Yes |
@@ -135,10 +141,12 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 - LDAP-Client-Signing-Required: Requires LDAP signing on clients.
 - LDAP-Server-Signing-Required: Requires LDAP signing on DCs.
 - LLMNR-Disabled: Disables LLMNR to reduce name resolution attacks (responder/relay).
+- LSA-Hardened: Enables LSA Protection (RunAsPPL) to prevent credential theft attacks by protecting the Local Security Authority process.
 - Logs-Advanced-Server-Enabled: Enables comprehensive advanced audit logging on servers (logon, process creation, Kerberos, file share, directory service, account management, etc.)
 - Logs-Advanced-Workstation-Enabled: Enables comprehensive advanced audit logging on workstations (logon, process creation, file share, account management, etc.)
 - mDNS-Disabled: Disables multicast DNS (mDNS) to prevent uncontrolled local discovery and reduce attack surface.
 - MSCache-Disabled: Disables or minimizes cached logons.
+- MSCache-NLIterationCount-Hardened: Increases the iteration count for cached password hashes to make offline attacks more difficult.
 - NBT-NS-Disabled: Disables NetBIOS over TCP/IP using PowerShell script (Level2016 method).
 - NBT-NS-New-Disabled: Disables NetBIOS over TCP/IP using the newer registry-based method (Windows 10/11+).
 - NTLM-Audit-Enabled: Audits NTLM usage to support later blocking.
@@ -163,6 +171,7 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 - TLS-Hardened: Disables old SSL/TLS; enforces modern TLS versions 
 - UAC-Hardened: Tightens UAC prompts and elevation rules; enforces Secure Desktop.
 - UNC-Paths-Hardened: Enables UNC hardening (mutual auth, integrity, privacy) on sensitive shares.
+- VBS-Enabled: Enables Virtualization Based Security with Code Integrity protection, Credential Guard, Secure Launch, and Kernel Stack Protection to provide hardware-enforced security.
 - Wdigest-Disabled: Disables WDigest to avoid reversible credential storage in memory.
 - WebProxyAutoDiscovery-Disabled: Disables OS-level auto-proxy discovery.
 - WPAD-Computer-Disabled: Disables WPAD in the computer context.
@@ -404,6 +413,19 @@ Always validate in pre-production, monitor NTLM audit before enforcement, and te
   - **Category**: Network/Name Resolution
   - **Compatibility**: Windows Vista+ and Windows Server 2008+
 
+<a id="lsa-hardened"></a>
+### LSA-Hardened
+
+- HKLM\SYSTEM\CurrentControlSet\Control\Lsa\RunAsPPL = 2
+  - **Policy**: Enable LSA Protection (RunAsPPL)
+  - **Description**: Protects the Local Security Authority (LSA) process by running it as a Protected Process Light (PPL), preventing credential theft attacks
+  - **Registry Setting**: HKLM\SYSTEM\CurrentControlSet\Control\Lsa\RunAsPPL = 2
+  - **Impact**: Prevents unauthorized access to LSA memory and credential extraction
+  - **Security Benefit**: Protects against Mimikatz and similar credential theft tools by preventing access to LSA process memory
+  - **Category**: Security/Credential Protection
+  - **Compatibility**: Windows Server 2012 R2+ and Windows 8.1+
+  - **Note**: Value 2 enables LSA Protection. Requires compatible hardware and may impact some security tools.
+
 <a id="lmhash-disabled"></a>
 ### LMHASH-Disabled
 
@@ -500,6 +522,19 @@ Always validate in pre-production, monitor NTLM audit before enforcement, and te
   - **Security Benefit**: Prevents offline password attacks and reduces credential exposure
   - **Category**: Security/Password
   - **Compatibility**: Windows Server 2008+ and Windows 7+
+
+<a id="mscache-nliterationcount-hardened"></a>
+### MSCache-NLIterationCount-Hardened
+
+- HKLM\SECURITY\Cache\NL$IterationCount = 0x7A2 (1954)
+  - **Policy**: Increase NetLogon cache iteration count for password hashes
+  - **Description**: Increases the iteration count used for hashing cached credentials, making offline password attacks significantly more difficult
+  - **Registry Setting**: HKLM\SECURITY\Cache\NL$IterationCount = 0x7A2 (1954 decimal)
+  - **Impact**: Significantly increases the time required for offline password cracking of cached credentials
+  - **Security Benefit**: Makes offline attacks on cached credentials computationally expensive, protecting against credential theft
+  - **Category**: Security/Password Protection
+  - **Compatibility**: Windows Server 2008+ and Windows 7+
+  - **Note**: Higher iteration counts increase security but may slightly impact logon performance. Default is typically 10240 (0x2800) or lower.
 
 <a id="nbt-ns-disabled"></a>
 ### NBT-NS-Disabled
@@ -862,6 +897,26 @@ Always validate in pre-production, monitor NTLM audit before enforcement, and te
   - **Security Benefit**: Prevents UNC path attacks and ensures data integrity
   - **Category**: Security/Network
   - **Compatibility**: Windows Server 2008+ and Windows 7+
+
+<a id="vbs-enabled"></a>
+### VBS-Enabled
+
+- Turn On Virtualization Based Security: Enabled
+  - **Policy**: Enable Virtualization Based Security (VBS) with comprehensive protection
+  - **Description**: Enables hardware-enforced security features using Windows Hypervisor to protect against advanced threats
+  - **Settings**:
+    - Platform Security Level: Secure Boot (required)
+    - Virtualization Based Protection of Code Integrity: Enabled with UEFI lock
+    - Require UEFI Memory Attributes Table: Enabled
+    - Credential Guard Configuration: Enabled with UEFI lock
+    - Machine Identity Isolation Configuration: Not Configured
+    - Secure Launch Configuration: Enabled
+    - Kernel-mode Hardware-enforced Stack Protection: Enabled in enforcement mode
+  - **Impact**: Provides hardware-enforced protection for code integrity, credentials, and kernel memory
+  - **Security Benefit**: Protects against advanced persistent threats, credential theft, kernel attacks, and code injection by using hardware virtualization
+  - **Category**: Security/Hardware-Enforced Protection
+  - **Compatibility**: Windows Server 2016+ and Windows 10 1607+ (requires compatible hardware with Secure Boot, TPM 2.0, and virtualization support)
+  - **Warning**: All drivers must be compatible with VBS or the system may crash. Test thoroughly before deployment. UEFI lock prevents remote disabling.
 
 <a id="wdigest-disabled"></a>
 ### Wdigest-Disabled

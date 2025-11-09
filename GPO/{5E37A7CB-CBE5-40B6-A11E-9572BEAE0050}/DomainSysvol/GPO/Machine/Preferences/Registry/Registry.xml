@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RegistrySettings clsid="{A3CCFC41-DFDB-43a5-8D26-0FE8B954DA51}"><Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="NL$IterationCount" status="NL$IterationCount" image="12" changed="2025-11-09 07:45:25" uid="{23B54A55-BD05-4F1F-9053-B5F63B6481D5}"><Properties action="U" displayDecimal="1" default="0" hive="HKEY_LOCAL_MACHINE" key="SECURITY\Cache" name="NL$IterationCount" type="REG_DWORD" value="000007A2"/></Registry>
+</RegistrySettings>
