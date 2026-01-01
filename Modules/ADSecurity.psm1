@@ -168,25 +168,35 @@ function Enable-LAPS {
     }
 }
   
-function Set-KrbtgtEncryption {
+function Set-KerberosEncryptionTypes {
     try {
-        Write-Host "`n=== Setting msDS-SupportedEncryptionTypes for krbtgt ===" -ForegroundColor Cyan
+        Write-Host "`n=== Setting msDS-SupportedEncryptionTypes for krbtgt and Domain Controllers ===" -ForegroundColor Cyan
 
-        $krbtgtAccount = Get-ADObject -Filter {Name -eq "krbtgt"} -Property msDS-SupportedEncryptionTypes
-        if ($krbtgtAccount) {
-            $currentEncryptionTypes = if ($null -eq $krbtgtAccount."msDS-SupportedEncryptionTypes") { 0 } else { $krbtgtAccount."msDS-SupportedEncryptionTypes" }
+        $encryptionTypes = @{
+            0x1 = "DES_CBC_CRC"
+            0x2 = "DES_CBC_MD5"
+            0x4 = "RC4"
+            0x8 = "AES 128"
+            0x10 = "AES 256"
+        }
+        $newEncryptionTypes = 0x18
+
+        # Function to display and update encryption types
+        function Update-EncryptionTypes {
+            param(
+                [Parameter(Mandatory=$true)]
+                [Microsoft.ActiveDirectory.Management.ADObject]$Account,
+                
+                [Parameter(Mandatory=$true)]
+                [string]$AccountName
+            )
+            
+            $currentEncryptionTypes = if ($null -eq $Account."msDS-SupportedEncryptionTypes") { 0 } else { $Account."msDS-SupportedEncryptionTypes" }
             
             # Display current encryption types
-            Write-Host "Current Encryption Types (Decimal: $currentEncryptionTypes, Hex: 0x$($currentEncryptionTypes.ToString('X')))" -ForegroundColor Yellow
-            Write-Host "Supported Encryption Types:" -ForegroundColor Yellow
-            
-            $encryptionTypes = @{
-                0x1 = "DES_CBC_CRC"
-                0x2 = "DES_CBC_MD5"
-                0x4 = "RC4"
-                0x8 = "AES 128"
-                0x10 = "AES 256"
-            }
+            Write-Host "`n-> $AccountName" -ForegroundColor Yellow
+            Write-Host "  Current Encryption Types (Decimal: $currentEncryptionTypes, Hex: 0x$($currentEncryptionTypes.ToString('X')))" -ForegroundColor Gray
+            Write-Host "  Supported Encryption Types:" -ForegroundColor Gray
             
             $supportedTypes = @()
             foreach ($type in $encryptionTypes.GetEnumerator()) {
@@ -196,37 +206,61 @@ function Set-KrbtgtEncryption {
             }
             
             if ($supportedTypes.Count -eq 0) {
-                Write-Host "  Not defined - defaults to RC4_HMAC_MD5" -ForegroundColor Gray
+                Write-Host "    Not defined - defaults to RC4_HMAC_MD5" -ForegroundColor Gray
             } else {
-                $supportedTypes | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+                $supportedTypes | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
             }
 
-            # Set the new encryption types to 0x18 (AES 128 and AES 256)
-            $newEncryptionTypes = 0x18
-            Set-ADObject -Identity $krbtgtAccount -Replace @{"msDS-SupportedEncryptionTypes" = $newEncryptionTypes}
-
-            if ($?) {
-                $updatedKrbtgtAccount = Get-ADObject -Filter {Name -eq "krbtgt"} -Property msDS-SupportedEncryptionTypes
-                $newValue = $updatedKrbtgtAccount."msDS-SupportedEncryptionTypes"
-                Write-Host "`n[OK] msDS-SupportedEncryptionTypes updated to:" -ForegroundColor Green
-                Write-Host "  Decimal: $newValue" -ForegroundColor Gray
-                Write-Host "  Hex: 0x$($newValue.ToString('X'))" -ForegroundColor Gray
-                Write-Host "  Supported Types:" -ForegroundColor Gray
-                $supportedTypes = @()
-                foreach ($type in $encryptionTypes.GetEnumerator()) {
-                    if ($newValue -band $type.Key) {
-                        $supportedTypes += $type.Value
+            # Update if needed
+            if ($currentEncryptionTypes -ne $newEncryptionTypes) {
+                Set-ADObject -Identity $Account -Replace @{"msDS-SupportedEncryptionTypes" = $newEncryptionTypes}
+                
+                if ($?) {
+                    $updatedAccount = Get-ADObject -Identity $Account -Property msDS-SupportedEncryptionTypes
+                    $newValue = $updatedAccount."msDS-SupportedEncryptionTypes"
+                    Write-Host "  [OK] msDS-SupportedEncryptionTypes updated to:" -ForegroundColor Green
+                    Write-Host "    Decimal: $newValue" -ForegroundColor Gray
+                    Write-Host "    Hex: 0x$($newValue.ToString('X'))" -ForegroundColor Gray
+                    Write-Host "    Supported Types:" -ForegroundColor Gray
+                    $supportedTypes = @()
+                    foreach ($type in $encryptionTypes.GetEnumerator()) {
+                        if ($newValue -band $type.Key) {
+                            $supportedTypes += $type.Value
+                        }
                     }
-                }
-                $supportedTypes | ForEach-Object {
-                    Write-Host "    $_" -ForegroundColor Gray
+                    $supportedTypes | ForEach-Object {
+                        Write-Host "      $_" -ForegroundColor Gray
+                    }
+                } else {
+                    Write-Host "  [X] Failed to update msDS-SupportedEncryptionTypes." -ForegroundColor Red
                 }
             } else {
-                Write-Host "[X] Failed to update msDS-SupportedEncryptionTypes." -ForegroundColor Red
+                Write-Host "  [OK] Encryption types already configured correctly" -ForegroundColor Green
             }
+        }
+
+        # Configure krbtgt account
+        Write-Host "`n=== Configuring krbtgt account ===" -ForegroundColor Cyan
+        $krbtgtAccount = Get-ADObject -Filter {Name -eq "krbtgt"} -Property msDS-SupportedEncryptionTypes
+        if ($krbtgtAccount) {
+            Update-EncryptionTypes -Account $krbtgtAccount -AccountName "krbtgt"
         } else {
             Write-Host "[X] krbtgt account not found." -ForegroundColor Red
         }
+
+        # Configure Domain Controllers
+        Write-Host "`n=== Configuring Domain Controllers ===" -ForegroundColor Cyan
+        $domainControllers = Get-ADComputer -Filter {PrimaryGroupID -eq 516} -Property msDS-SupportedEncryptionTypes
+        
+        if ($domainControllers) {
+            Write-Host "Found $($domainControllers.Count) Domain Controller(s)" -ForegroundColor Yellow
+            foreach ($dc in $domainControllers) {
+                Update-EncryptionTypes -Account $dc -AccountName $dc.Name
+            }
+        } else {
+            Write-Host "[!] No Domain Controllers found." -ForegroundColor Yellow
+        }
+
     } catch {
         Write-Error "[X] Failed to set msDS-SupportedEncryptionTypes: $_"
         throw
@@ -268,4 +302,4 @@ function Enable-Bitlocker {
 }
 
 # Export all functions
-Export-ModuleMember -Function Set-ADSIUnauthenticatedBind, Set-msDSMachineAccountQuota, Set-KrbtgtEncryption, Enable-RecycleBin, Enable-LAPS, Enable-Bitlocker
+Export-ModuleMember -Function Set-ADSIUnauthenticatedBind, Set-msDSMachineAccountQuota, Set-KerberosEncryptionTypes, Enable-RecycleBin, Enable-LAPS, Enable-Bitlocker

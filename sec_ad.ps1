@@ -116,7 +116,7 @@ function Test-FunctionalLevel {
 # Main Execution
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 $customModules = @("Common.psm1", "GPO.psm1", "ADSecurity.psm1", "ADStructure.psm1")
-$requiredFunctions = @("Initialize-ADStructure", "New-OU", "New-Group", "Import-SecurityHardeningGPOs", "Set-GPOsToTiers", "Set-ADSIUnauthenticatedBind", "Set-msDSMachineAccountQuota", "Set-KrbtgtEncryption", "Enable-RecycleBin", "Enable-LAPS", "Enable-Bitlocker")
+$requiredFunctions = @("Initialize-ADStructure", "New-OU", "New-Group", "Import-SecurityHardeningGPOs", "Set-GPOsToTiers", "Set-ADSIUnauthenticatedBind", "Set-msDSMachineAccountQuota", "Set-KerberosEncryptionTypes", "Enable-RecycleBin", "Enable-LAPS", "Enable-Bitlocker")
 $configPath = Join-Path $scriptPath "Config\Global_config.json"
 $gpoConfigPath = Join-Path $scriptPath "Config\GPO_config.json"
 
@@ -127,7 +127,7 @@ $functionMappings = [ordered]@{
     "ApplyGPOsToTiers" = { Set-GPOsToTiers -TargetDomain $script:Config.TargetDomain -RootDN $script:Config.RootDN -TierNames $script:Config.TierNames -gpoConfigPath $gpoConfigPath }
     "SetADSIUnauthenticatedBind" = { Set-ADSIUnauthenticatedBind -TargetDomain $script:Config.TargetDomain }
     "SetmsDSMachineAccountQuota" = { Set-msDSMachineAccountQuota -TargetDomain $script:Config.TargetDomain }
-    "SetmsDSSupportedEncryptionTypes-krbtgt" = { Set-KrbtgtEncryption }
+    "SetmsDSSupportedEncryptionTypes-krbtgt" = { Set-KerberosEncryptionTypes }
     "EnableRecycleBin" = { Enable-RecycleBin -TargetDomain $script:Config.TargetDomain -FunctionalLevels $functionalLevels }
     "EnableLAPS" = { Enable-LAPS -TargetDomain $script:Config.TargetDomain }
     "EnableBitlocker" = { Enable-BitLocker }
