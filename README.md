@@ -9,6 +9,7 @@ Automated tiered Active Directory hardening with security baseline GPOs, defense
 - [Usage](#usage)
 - [Module structure](#module-structure)
 - [GPO linking strategy](#gpo-linking-strategy)
+- [GPO catalog](gpo.md)
 - [AD hardening (advanced, opt-in)](#ad-hardening)
 - [Rollback (`restore.ps1`)](#restore)
 - [Security considerations](#security-considerations)
