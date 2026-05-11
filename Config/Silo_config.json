@@ -1,0 +1,15 @@
+{
+    "_comment": "Tier 0 Authentication Policy Silo configuration. Mode controls Audit vs Enforce. Members lists are additive: accounts already assigned to the silo but absent from this file are NOT removed. To remove an account, do it manually via Set-ADAccountAuthenticationPolicySilo -AuthenticationPolicySilo $null.",
+
+    "PolicyName": "Tier0-AuthPolicy",
+    "SiloName": "Tier0-Silo",
+    "Mode": "Audit",
+    "TGTLifetimeMinutes": 40,
+
+    "Members": {
+        "_comment": "All entries are SamAccountName. Computer accounts must end with '$'. Sections are grouped for readability only; resolution is done by SamAccountName regardless of the section.",
+        "Users":    [],
+        "Computers": [],
+        "Services": []
+    }
+}

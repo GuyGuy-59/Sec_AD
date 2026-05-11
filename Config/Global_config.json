@@ -16,6 +16,13 @@
         "SetmsDSSupportedEncryptionTypes-krbtgt": true,
         "EnableRecycleBin": true,
         "EnableLAPS": true,
-        "EnableBitlocker": true
+        "EnableBitlocker": true,
+        "SetTierOUDelegation": false,
+        "NewTier0AuthenticationPolicySilo": false,
+        "LockPreWindows2000Group": false,
+        "GetPrivilegedGroupAudit": false,
+        "SetTier0AccountSensitive": false,
+        "CompareStateBackup": false,
+        "RestoreStateBackup": false
     }
 } 
