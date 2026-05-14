@@ -98,7 +98,8 @@ function New-StateBackup {
 
     # ---- Managed groups ----
     $managedGroups = @(
-        @{ Name = 'LAPS-Pwd-Read'; Path = "OU=Tier2,OU=_$AdmName,$RootDN" }
+        @{ Name = 'LAPS-Pwd-Read-T2'; Path = "OU=Tier2,OU=_$AdmName,$RootDN" }
+        @{ Name = 'LAPS-Pwd-Read-T0'; Path = "OU=Tier0,OU=_$AdmName,$RootDN" }
         @{ Name = 'PAW-Tier0';     Path = "OU=Tier0,OU=_$AdmName,$RootDN" }
         @{ Name = 'PAW-Tier1';     Path = "OU=Tier1,OU=_$AdmName,$RootDN" }
     )

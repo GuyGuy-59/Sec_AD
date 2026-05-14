@@ -168,21 +168,22 @@ function Enable-LAPS {
             }
 
             $domainDN = (Get-ADDomain $TargetDomain).DistinguishedName
-            $workstationsOU = "OU=Workstations,OU=_Tier2,$domainDN"
+            $workstationsOU = @(
+                @{ Name = "$TargetDomain\LAPS-Pwd-Read-T2"; Path = "OU=Workstations,OU=_Tier2,$domainDN" }
+                @{ Name = "$TargetDomain\LAPS-Pwd-Read-T0"; Path = "OU=PAW,OU=_Tier0,$domainDN" }
+            )
+            foreach ($w in $workstationsOU) {
+            
+                Set-LapsADComputerSelfPermission -Identity $w.Path
+                Write-Host "[OK] Setting LAPS AD Computer Self Permission..." -ForegroundColor Yellow
+                
+                Set-LapsADReadPasswordPermission -Identity $w.Path -AllowedPrincipals $w.Name
+                Write-Host "[OK] Setting LAPS password read permissions..." -ForegroundColor Yellow
 
-            if ($PSCmdlet.ShouldProcess($workstationsOU, 'Set LAPS computer self permission')) {
-                Set-LapsADComputerSelfPermission -Identity $workstationsOU
-                Write-Log "[OK] Setting LAPS AD Computer Self Permission..." -Level SUCCESS
+                Write-Host "`n[!] IMPORTANT:" -ForegroundColor Yellow
+                Write-Host "The LAPS-Enabled GPO must be modified to add $w.Name" -ForegroundColor Yellow
+                Write-Host "in the 'Configure authorized password decryptors' setting" -ForegroundColor Yellow
             }
-
-            if ($PSCmdlet.ShouldProcess($workstationsOU, "Grant LAPS read to $TargetDomain\LAPS-Pwd-Read")) {
-                Set-LapsADReadPasswordPermission -Identity $workstationsOU -AllowedPrincipals "$TargetDomain\LAPS-Pwd-Read"
-                Write-Log "[OK] Setting LAPS password read permissions..." -Level SUCCESS
-            }
-
-            Write-Log "`n[!] IMPORTANT:" -Level WARN
-            Write-Log "The LAPS-Enabled GPO must be modified to add $TargetDomain\LAPS-Pwd-Read" -Level WARN
-            Write-Log "in the 'Configure authorized password decryptors' setting" -Level WARN
         } else {
             Write-Log "[X] LAPS is not installed." -Level ERROR
         }
@@ -479,8 +480,8 @@ function New-Tier0AuthenticationPolicySilo {
           - Accounts already assigned to the silo but absent from the config are NOT removed.
 
         The policy enforces two SDDL conditions on the resource side:
-          - UserAllowedToAuthenticateTo:    (@USER.ad://ext/AuthenticationSilo == "<SiloName>")
-          - ComputerAllowedToAuthenticateTo:(@DEVICE.ad://ext/AuthenticationSilo == "<SiloName>")
+          - userAllowedToAuthenticateFrom:(@USER.ad://ext/AuthenticationSilo == "<SiloName>")
+          - ComputerAllowedToAuthenticateTo:(@USER.ad://ext/AuthenticationSilo == "<SiloName>")
 
         Audit mode is the recommended default. Switch to Enforce only after confirming that no
         legitimate authentication is denied. The mode is read from the JSON; this function
@@ -536,8 +537,8 @@ function New-Tier0AuthenticationPolicySilo {
         return
     }
 
-    # SDDL conditions on the resource side
-    $userAllowedToAuthTo     = "O:SYG:SYD:(XA;OICI;CR;;;WD;(@USER.ad://ext/AuthenticationSilo == ""$SiloName""))"
+    # SDDL conditions on the resource side 
+    $userAllowedToAuthenticateFrom = "O:SYG:SYD:(XA;OICI;CR;;;WD;(@USER.ad://ext/AuthenticationSilo == ""$SiloName""))"
     $computerAllowedToAuthTo = "O:SYG:SYD:(XA;OICI;CR;;;WD;(@USER.ad://ext/AuthenticationSilo == ""$SiloName""))"
     $enforce = ($Mode -eq 'Enforce')
 
@@ -549,7 +550,7 @@ function New-Tier0AuthenticationPolicySilo {
             try {
                 Set-ADAuthenticationPolicy -Identity $PolicyName `
                     -Enforce:$enforce `
-                    -UserAllowedToAuthenticateTo $userAllowedToAuthTo `
+                    -UserAllowedToAuthenticateFrom $userAllowedToAuthenticateFrom `
                     -ComputerAllowedToAuthenticateTo $computerAllowedToAuthTo `
                     -ErrorAction Stop
                 Write-Log "  [OK] Policy updated: Enforce=$enforce, conditions set" -Level SUCCESS
@@ -566,7 +567,7 @@ function New-Tier0AuthenticationPolicySilo {
                     -UserTGTLifetimeMins $TGTLifetimeMinutes `
                     -ComputerTGTLifetimeMins $TGTLifetimeMinutes `
                     -ServiceTGTLifetimeMins $TGTLifetimeMinutes `
-                    -UserAllowedToAuthenticateTo $userAllowedToAuthTo `
+                    -UserAllowedToAuthenticateFrom $userAllowedToAuthenticateFrom `
                     -ComputerAllowedToAuthenticateTo $computerAllowedToAuthTo `
                     -Enforce:$enforce `
                     -ErrorAction Stop
@@ -684,7 +685,7 @@ function New-Tier0AuthenticationPolicySilo {
         Write-Log "      2. Monitor DC events 105/305 (silo/policy), 4625, 4768, 4769, 4770." -Level WARN
         Write-Log "      3. When audit shows no unexpected denials, set Mode='Enforce' in $SiloConfigPath and re-run." -Level WARN
     } else {
-        Write-Log "      [!] ENFORCE MODE ACTIVE — authentication failures will BLOCK access." -Level WARN
+        Write-Log "      [!] ENFORCE MODE ACTIVE -- authentication failures will BLOCK access." -Level WARN
         Write-Log "      To revert: set Mode='Audit' in $SiloConfigPath and re-run." -Level WARN
     }
 }

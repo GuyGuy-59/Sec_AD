@@ -76,77 +76,73 @@ function New-Group {
 function Initialize-ADStructure {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
-        [Parameter(Mandatory=$true)] [string]$RootDN,
-        [Parameter(Mandatory=$true)] [string]$AdmName,
-        [Parameter(Mandatory=$true)] [string[]]$TierNames,
-        [Parameter(Mandatory=$true)] [string[]]$SubOUs,
-        [Parameter(Mandatory=$true)] [string[]]$Tier0and1SubOUs,
-        [Parameter(Mandatory=$true)] [string]$DisabledOU
+        [Parameter(Mandatory)] [string]$RootDN,
+        [Parameter(Mandatory)] [string]$AdmName,
+        [Parameter(Mandatory)] [string[]]$TierNames,
+        [Parameter(Mandatory)] [string[]]$SubOUs,
+        [Parameter(Mandatory)] [string[]]$Tier0and1SubOUs,
+        [Parameter(Mandatory)] [string]$DisabledOU
     )
 
     try {
+        # 1. ADM root + one admin sub-OU per tier
         Write-Log "`n=== Creating ADM Structure ===" -Level INFO -Color Cyan
-        Write-Log "Creating base ADM structure in: $RootDN" -Level INFO
         $AdmDN = New-OU -ParentDN $RootDN -OUName "_$AdmName"
-
-        Write-Log "`n-> Creating ADM Tiers..." -Level INFO
         foreach ($TierName in $TierNames) {
-            New-OU -ParentDN $AdmDN -OUName $TierName
+            New-OU -ParentDN $AdmDN -OUName $TierName | Out-Null
         }
 
-        Write-Log "`n=== Creating Tier Structure ===" -Level INFO -Color Cyan
-        Write-Log "Creating base Tier OUs..." -Level INFO
+        # 2. Tier root OUs
+        Write-Log "`n=== Creating Tier Root OUs ===" -Level INFO -Color Cyan
         $TierDNs = @{}
         foreach ($TierName in $TierNames) {
             $TierDNs[$TierName] = New-OU -ParentDN $RootDN -OUName "_$TierName"
         }
 
-        Write-Log "`n=== Creating Sub-OUs ===" -Level INFO -Color Cyan
+        # 3. Sub-OUs and security groups per tier
+        Write-Log "`n=== Creating Sub-OUs and Groups ===" -Level INFO -Color Cyan
         foreach ($TierName in $TierNames) {
             Write-Log "`n-> Processing $TierName..." -Level INFO
-            $TierDN = $TierDNs[$TierName]
+            $TierDN    = $TierDNs[$TierName]
+            $admTierOU = "OU=$TierName,OU=_$AdmName,$RootDN"
 
-            if ($TierName -match "Tier0") {
-                Write-Log "  -> Creating Tier0 special OUs..." -Level INFO
-                foreach ($SpecialOU in @("PAW")) {
-                    $SpecialDN = New-OU -ParentDN $TierDN -OUName $SpecialOU
-                    New-OU -ParentDN $SpecialDN -OUName $DisabledOU
-                }
+            # Tier0: PAW container
+            if ($TierName -eq 'Tier0') {
+                $pawDN = New-OU -ParentDN $TierDN -OUName 'PAW'
+                New-OU -ParentDN $pawDN -OUName $DisabledOU | Out-Null
             }
-            if ($TierName -match "Tier2") {
-                Write-Log "  -> Creating Tier2 structure..." -Level INFO
-                foreach ($SubOU in $SubOUs) {
-                    $SubOUDN = New-OU -ParentDN $TierDN -OUName $SubOU
-                    New-OU -ParentDN $SubOUDN -OUName $DisabledOU
-                }
 
-                Write-Log "  -> Creating Tier2 special OUs..." -Level INFO
-                foreach ($SpecialOU in @("Users", "Workstations")) {
-                    $SpecialDN = New-OU -ParentDN $TierDN -OUName $SpecialOU
-                    New-OU -ParentDN $SpecialDN -OUName $DisabledOU
-                }
-            } else {
-                Write-Log "  -> Creating Tier0/1 structure..." -Level INFO
-                foreach ($SubOU in $Tier0and1SubOUs) {
-                    $SubOUDN = New-OU -ParentDN $TierDN -OUName $SubOU
-                    New-OU -ParentDN $SubOUDN -OUName $DisabledOU
+            # Sub-OUs (each gets a Disabled child)
+            $subList = if ($TierName -eq 'Tier2') { $SubOUs } else { $Tier0and1SubOUs }
+            foreach ($sub in $subList) {
+                $subDN = New-OU -ParentDN $TierDN -OUName $sub
+                New-OU -ParentDN $subDN -OUName $DisabledOU | Out-Null
+            }
+
+            # Tier2: flat Users and Workstations containers
+            if ($TierName -eq 'Tier2') {
+                foreach ($container in @('Users', 'Workstations')) {
+                    $contDN = New-OU -ParentDN $TierDN -OUName $container
+                    New-OU -ParentDN $contDN -OUName $DisabledOU | Out-Null
                 }
             }
 
-            Write-Log "  -> Creating security groups..." -Level INFO
-            $GroupsOU = "OU=Groups,$($TierDNs[$TierName])"
-            New-Group -GroupName "${TierName}_Users" -GroupScope "Global" -ParentOU $GroupsOU
+            # Tier-level user group (in Groups OU already created above via $subList)
+            $GroupsOU = "OU=Groups,$TierDN"
+            New-Group -GroupName "${TierName}_Users" -GroupScope 'Global' -ParentOU $GroupsOU
 
-            if ($TierName -eq "Tier2") {
-                Write-Log "  -> Creating LAPS-Pwd-Read group in ADM Tier2..." -Level INFO
-                $admTier2GroupsOU = "OU=Tier2,OU=_$AdmName,$RootDN"
-                New-Group -GroupName "LAPS-Pwd-Read" -GroupScope "DomainLocal" -ParentOU $admTier2GroupsOU
-            }
-
-            if ($TierName -eq "Tier0" -or $TierName -eq "Tier1") {
-                Write-Log "  -> Creating PAW-${TierName} local group..." -Level INFO
-                $pawGroupsOU = "OU=$TierName,OU=_$AdmName,$RootDN"
-                New-Group -GroupName "PAW-${TierName}" -GroupScope "DomainLocal" -ParentOU $pawGroupsOU
+            # ADM-side groups specific to each tier
+            switch ($TierName) {
+                'Tier0' {
+                    New-Group -GroupName 'PAW-Tier0'        -GroupScope 'DomainLocal' -ParentOU $admTierOU
+                    New-Group -GroupName 'LAPS-Pwd-Read-T0' -GroupScope 'DomainLocal' -ParentOU $admTierOU
+                }
+                'Tier1' {
+                    New-Group -GroupName 'PAW-Tier1'        -GroupScope 'DomainLocal' -ParentOU $admTierOU
+                }
+                'Tier2' {
+                    New-Group -GroupName 'LAPS-Pwd-Read-T2' -GroupScope 'DomainLocal' -ParentOU $admTierOU
+                }
             }
         }
 

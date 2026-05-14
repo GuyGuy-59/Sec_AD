@@ -18,9 +18,9 @@
                 "LDAP-Client-Signing-Required",
                 "LDAP-Server-Signing-Required",
                 "LLMNR-Disabled",
-                "LSA-Hardened",
                 "Logs-Advanced-Server-Enabled",
                 "Logs-Advanced-Workstation-Enabled",
+                "LSA-Hardened",
                 "mDNS-Disabled",
                 "MSCache-Disabled",
                 "MSCache-NLIterationCount-Hardened",
@@ -68,84 +68,166 @@
         }
     },
     "_categories": {
-        "_comment": "Reference catalog: which GPO targets which type of OU. Used as documentation only — actual linking is driven by TierMappings below.",
-        "AllComputers": [
-            "IPv6-Disabled", "LLMNR-Disabled", "mDNS-Disabled", "SSDP-Disabled",
-            "SMB-Server-Signing-Enabled", "SMB-Client-Signing-Enabled", "SMBv1-Disabled",
-            "LDAP-Client-Signing-Required", "Wdigest-Disabled",
-            "NTLM-Audit-Enabled", "NTLMv2-128bits-Required", "NTLM1-LM-Disabled",
-            "Kerberos-AES-Enabled", "Kerberos-Armoring-Enabled",
-            "LSA-Hardened", "TLS-Hardened", "RPC-Hardened",
-            "Powershell-Hardened", "UAC-Hardened",
-            "MSCache-Disabled", "MSCache-NLIterationCount-Hardened",
-            "Bloodhound-Mitigation", "WPAD-Computer-Disabled", "WebProxyAutoDiscovery-Disabled",
-            "Secure-NetLogon", "VBS-Enabled",
-            "LMHASH-Disabled", "NBT-NS-Disabled", "NBT-NS-New-Disabled",
-            "SMB-Client-Encrypt-Required", "SMB-NTLM-Disabled"
+        "_comment": "Reference catalog mapping each GPO to the OU type it targets. Drives TierMappings below. Level-conditional categories (Level2016/Level2025) are imported conditionally but must be linked manually or via a future FL-aware linking pass.",
+        "ComputerBase": [
+            "Bloodhound-Mitigation",
+            "IPv6-Disabled",
+            "Kerberos-AES-Enabled",
+            "Kerberos-Armoring-Enabled",
+            "LDAP-Client-Signing-Required",
+            "LLMNR-Disabled",
+            "LSA-Hardened",
+            "mDNS-Disabled",
+            "MSCache-Disabled",
+            "MSCache-NLIterationCount-Hardened",
+            "NTLM-Audit-Enabled",
+            "NTLM-Disabled",
+            "NTLM1-LM-Disabled",
+            "NTLMv2-128bits-Required",
+            "Powershell-Hardened",
+            "RDP-hijacking-Mitigation",
+            "RDP-Secure-Connection-Enabled",
+            "Remote-Credential-Guard-Enabled",
+            "RPC-Hardened",
+            "Secure-NetLogon",
+            "SMB-Client-Signing-Enabled",
+            "SMB-Server-Signing-Enabled",
+            "SMBv1-Disabled",
+            "SSDP-Disabled",
+            "TLS-Hardened",
+            "UAC-Hardened",
+            "UNC-Paths-Hardened",
+            "VBS-Enabled",
+            "Wdigest-Disabled",
+            "WebProxyAutoDiscovery-Disabled",
+            "WPAD-Computer-Disabled"
+        ],
+        "ComputerBase_Level2016": [
+            "LMHASH-Disabled",
+            "NBT-NS-Disabled"
+        ],
+        "ComputerBase_Level2025": [
+            "NBT-NS-New-Disabled",
+            "SMB-Client-Encrypt-Required",
+            "SMB-NTLM-Disabled"
+        ],
+        "DomainControllerOnly": [
+            "LDAP-CBT-Enabled",
+            "LDAP-Server-Signing-Required"
         ],
         "ServersOnly": [
-            "Logs-Advanced-Server-Enabled", "LDAP-Server-Signing-Required",
-            "RDP-Secure-Connection-Enabled", "RDP-hijacking-Mitigation",
-            "Remote-Credential-Guard-Enabled"
+            "Logs-Advanced-Server-Enabled"
         ],
         "WorkstationsOnly": [
-            "Bitlocker-Enabled", "Logs-Advanced-Workstation-Enabled",
-            "Applocker-Enabled", "LAPS-Enabled",
-            "Exploit-Guard-ASR-Enabled", "Exploit-Guard-CFA-Enabled", "Exploit-Guard-NP-Enabled",
-            "LDAP-CBT-Enabled"
+            "Applocker-Enabled",
+            "Bitlocker-Enabled",
+            "Exploit-Guard-ASR-Enabled",
+            "Exploit-Guard-CFA-Enabled",
+            "Exploit-Guard-NP-Enabled",
+            "LAPS-Enabled",
+            "Logs-Advanced-Workstation-Enabled"
         ],
         "UsersSide": [
-            "ScreenLock-enabled", "WPAD-User-Disabled", "Proxy-Change-Disabled",
-            "WScript-Disabled", "UNC-Paths-Hardened", "NTLM-Disabled"
+            "Proxy-Change-Disabled",
+            "ScreenLock-enabled",
+            "WPAD-User-Disabled",
+            "WScript-Disabled"
         ]
     },
+
     "TierMappings": {
         "Tier0": {
             "description": "Tier 0 (Domain Controllers, PAW)",
             "subOUs": {
                 "Servers": {
-                    "_note": "Domain Controllers OU. Computer-side hardening + DC-specific (server logs, LDAP server signing, RDP).",
+                    "_note": "Domain Controllers: ComputerBase + DomainControllerOnly + ServersOnly.",
                     "gpos": [
-                        "IPv6-Disabled", "LLMNR-Disabled", "mDNS-Disabled", "SSDP-Disabled",
-                        "SMB-Server-Signing-Enabled", "SMB-Client-Signing-Enabled", "SMBv1-Disabled",
-                        "LDAP-Client-Signing-Required", "LDAP-Server-Signing-Required",
-                        "Wdigest-Disabled", "NTLM-Audit-Enabled", "NTLMv2-128bits-Required", "NTLM1-LM-Disabled",
-                        "Kerberos-AES-Enabled", "Kerberos-Armoring-Enabled",
-                        "LSA-Hardened", "TLS-Hardened", "RPC-Hardened",
-                        "Powershell-Hardened", "UAC-Hardened",
-                        "MSCache-Disabled", "MSCache-NLIterationCount-Hardened",
-                        "Bloodhound-Mitigation", "WPAD-Computer-Disabled", "WebProxyAutoDiscovery-Disabled",
-                        "Secure-NetLogon", "VBS-Enabled",
+                        "Bloodhound-Mitigation",
+                        "IPv6-Disabled",
+                        "Kerberos-AES-Enabled",
+                        "Kerberos-Armoring-Enabled",
+                        "LDAP-CBT-Enabled",
+                        "LDAP-Client-Signing-Required",
+                        "LDAP-Server-Signing-Required",
+                        "LLMNR-Disabled",
                         "Logs-Advanced-Server-Enabled",
-                        "RDP-Secure-Connection-Enabled", "RDP-hijacking-Mitigation",
-                        "Remote-Credential-Guard-Enabled"
+                        "LSA-Hardened",
+                        "mDNS-Disabled",
+                        "MSCache-Disabled",
+                        "MSCache-NLIterationCount-Hardened",
+                        "NTLM-Audit-Enabled",
+                        "NTLM-Disabled",
+                        "NTLM1-LM-Disabled",
+                        "NTLMv2-128bits-Required",
+                        "Powershell-Hardened",
+                        "RDP-hijacking-Mitigation",
+                        "RDP-Secure-Connection-Enabled",
+                        "Remote-Credential-Guard-Enabled",
+                        "RPC-Hardened",
+                        "Secure-NetLogon",
+                        "SMB-Client-Signing-Enabled",
+                        "SMB-Server-Signing-Enabled",
+                        "SMBv1-Disabled",
+                        "SSDP-Disabled",
+                        "TLS-Hardened",
+                        "UAC-Hardened",
+                        "UNC-Paths-Hardened",
+                        "VBS-Enabled",
+                        "Wdigest-Disabled",
+                        "WebProxyAutoDiscovery-Disabled",
+                        "WPAD-Computer-Disabled"
                     ]
                 },
                 "PAW": {
-                    "_note": "Privileged Access Workstations: workstation-side hardening + user controls.",
+                    "_note": "Privileged Access Workstations: ComputerBase + WorkstationsOnly.",
                     "gpos": [
-                        "IPv6-Disabled", "LLMNR-Disabled", "mDNS-Disabled", "SSDP-Disabled",
-                        "SMB-Server-Signing-Enabled", "SMB-Client-Signing-Enabled", "SMBv1-Disabled",
-                        "LDAP-Client-Signing-Required", "LDAP-CBT-Enabled",
-                        "Wdigest-Disabled", "NTLM-Audit-Enabled", "NTLMv2-128bits-Required", "NTLM1-LM-Disabled",
-                        "Kerberos-AES-Enabled", "Kerberos-Armoring-Enabled",
-                        "LSA-Hardened", "TLS-Hardened", "RPC-Hardened",
-                        "Powershell-Hardened", "UAC-Hardened",
-                        "MSCache-Disabled", "MSCache-NLIterationCount-Hardened",
-                        "Bloodhound-Mitigation", "WPAD-Computer-Disabled", "WebProxyAutoDiscovery-Disabled",
-                        "Secure-NetLogon", "VBS-Enabled",
-                        "Bitlocker-Enabled", "Applocker-Enabled", "LAPS-Enabled",
+                        "Applocker-Enabled",
+                        "Bitlocker-Enabled",
+                        "Bloodhound-Mitigation",
+                        "Exploit-Guard-ASR-Enabled",
+                        "Exploit-Guard-CFA-Enabled",
+                        "Exploit-Guard-NP-Enabled",
+                        "IPv6-Disabled",
+                        "Kerberos-AES-Enabled",
+                        "Kerberos-Armoring-Enabled",
+                        "LAPS-Enabled",
+                        "LDAP-Client-Signing-Required",
+                        "LLMNR-Disabled",
                         "Logs-Advanced-Workstation-Enabled",
-                        "Exploit-Guard-ASR-Enabled", "Exploit-Guard-CFA-Enabled", "Exploit-Guard-NP-Enabled",
-                        "RDP-Secure-Connection-Enabled", "RDP-hijacking-Mitigation",
-                        "Remote-Credential-Guard-Enabled"
+                        "LSA-Hardened",
+                        "mDNS-Disabled",
+                        "MSCache-Disabled",
+                        "MSCache-NLIterationCount-Hardened",
+                        "NTLM-Audit-Enabled",
+                        "NTLM-Disabled",
+                        "NTLM1-LM-Disabled",
+                        "NTLMv2-128bits-Required",
+                        "Powershell-Hardened",
+                        "RDP-hijacking-Mitigation",
+                        "RDP-Secure-Connection-Enabled",
+                        "Remote-Credential-Guard-Enabled",
+                        "RPC-Hardened",
+                        "Secure-NetLogon",
+                        "SMB-Client-Signing-Enabled",
+                        "SMB-Server-Signing-Enabled",
+                        "SMBv1-Disabled",
+                        "SSDP-Disabled",
+                        "TLS-Hardened",
+                        "UAC-Hardened",
+                        "UNC-Paths-Hardened",
+                        "VBS-Enabled",
+                        "Wdigest-Disabled",
+                        "WebProxyAutoDiscovery-Disabled",
+                        "WPAD-Computer-Disabled"
                     ]
                 },
                 "Admins": {
-                    "_note": "Tier 0 admin user accounts: user-side controls only.",
+                    "_note": "Tier 0 admin user accounts: UsersSide.",
                     "gpos": [
-                        "ScreenLock-enabled", "WPAD-User-Disabled", "Proxy-Change-Disabled",
-                        "WScript-Disabled", "UNC-Paths-Hardened", "NTLM-Disabled"
+                        "Proxy-Change-Disabled",
+                        "ScreenLock-enabled",
+                        "WPAD-User-Disabled",
+                        "WScript-Disabled"
                     ]
                 }
             }
@@ -154,28 +236,49 @@
             "description": "Tier 1 (Administrative Servers)",
             "subOUs": {
                 "Servers": {
-                    "_note": "Tier 1 servers: full computer-side hardening + server-specific.",
+                    "_note": "Tier 1 servers: ComputerBase + ServersOnly.",
                     "gpos": [
-                        "IPv6-Disabled", "LLMNR-Disabled", "mDNS-Disabled", "SSDP-Disabled",
-                        "SMB-Server-Signing-Enabled", "SMB-Client-Signing-Enabled", "SMBv1-Disabled",
+                        "Bloodhound-Mitigation",
+                        "IPv6-Disabled",
+                        "Kerberos-AES-Enabled",
+                        "Kerberos-Armoring-Enabled",
                         "LDAP-Client-Signing-Required",
-                        "Wdigest-Disabled", "NTLM-Audit-Enabled", "NTLMv2-128bits-Required", "NTLM1-LM-Disabled",
-                        "Kerberos-AES-Enabled", "Kerberos-Armoring-Enabled",
-                        "LSA-Hardened", "TLS-Hardened", "RPC-Hardened",
-                        "Powershell-Hardened", "UAC-Hardened",
-                        "MSCache-Disabled", "MSCache-NLIterationCount-Hardened",
-                        "Bloodhound-Mitigation", "WPAD-Computer-Disabled", "WebProxyAutoDiscovery-Disabled",
-                        "Secure-NetLogon", "VBS-Enabled",
+                        "LLMNR-Disabled",
                         "Logs-Advanced-Server-Enabled",
-                        "RDP-Secure-Connection-Enabled", "RDP-hijacking-Mitigation",
-                        "Remote-Credential-Guard-Enabled"
+                        "LSA-Hardened",
+                        "mDNS-Disabled",
+                        "MSCache-Disabled",
+                        "MSCache-NLIterationCount-Hardened",
+                        "NTLM-Audit-Enabled",
+                        "NTLM-Disabled",
+                        "NTLM1-LM-Disabled",
+                        "NTLMv2-128bits-Required",
+                        "Powershell-Hardened",
+                        "RDP-hijacking-Mitigation",
+                        "RDP-Secure-Connection-Enabled",
+                        "Remote-Credential-Guard-Enabled",
+                        "RPC-Hardened",
+                        "Secure-NetLogon",
+                        "SMB-Client-Signing-Enabled",
+                        "SMB-Server-Signing-Enabled",
+                        "SMBv1-Disabled",
+                        "SSDP-Disabled",
+                        "TLS-Hardened",
+                        "UAC-Hardened",
+                        "UNC-Paths-Hardened",
+                        "VBS-Enabled",
+                        "Wdigest-Disabled",
+                        "WebProxyAutoDiscovery-Disabled",
+                        "WPAD-Computer-Disabled"
                     ]
                 },
                 "Admins": {
-                    "_note": "Tier 1 admin user accounts.",
+                    "_note": "Tier 1 admin user accounts: UsersSide.",
                     "gpos": [
-                        "ScreenLock-enabled", "WPAD-User-Disabled", "Proxy-Change-Disabled",
-                        "WScript-Disabled", "UNC-Paths-Hardened", "NTLM-Disabled"
+                        "Proxy-Change-Disabled",
+                        "ScreenLock-enabled",
+                        "WPAD-User-Disabled",
+                        "WScript-Disabled"
                     ]
                 }
             }
@@ -184,36 +287,64 @@
             "description": "Tier 2 (Workstations, end users)",
             "subOUs": {
                 "Workstations": {
-                    "_note": "End-user workstations: full computer-side hardening + workstation-specific.",
+                    "_note": "End-user workstations: ComputerBase + WorkstationsOnly.",
                     "gpos": [
-                        "IPv6-Disabled", "LLMNR-Disabled", "mDNS-Disabled", "SSDP-Disabled",
-                        "SMB-Server-Signing-Enabled", "SMB-Client-Signing-Enabled", "SMBv1-Disabled",
-                        "LDAP-Client-Signing-Required", "LDAP-CBT-Enabled",
-                        "Wdigest-Disabled", "NTLM-Audit-Enabled", "NTLMv2-128bits-Required", "NTLM1-LM-Disabled",
-                        "Kerberos-AES-Enabled", "Kerberos-Armoring-Enabled",
-                        "LSA-Hardened", "TLS-Hardened", "RPC-Hardened",
-                        "Powershell-Hardened", "UAC-Hardened",
-                        "MSCache-Disabled", "MSCache-NLIterationCount-Hardened",
-                        "Bloodhound-Mitigation", "WPAD-Computer-Disabled", "WebProxyAutoDiscovery-Disabled",
-                        "Secure-NetLogon", "VBS-Enabled",
-                        "Bitlocker-Enabled", "Applocker-Enabled", "LAPS-Enabled",
+                        "Applocker-Enabled",
+                        "Bitlocker-Enabled",
+                        "Bloodhound-Mitigation",
+                        "Exploit-Guard-ASR-Enabled",
+                        "Exploit-Guard-CFA-Enabled",
+                        "Exploit-Guard-NP-Enabled",
+                        "IPv6-Disabled",
+                        "Kerberos-AES-Enabled",
+                        "Kerberos-Armoring-Enabled",
+                        "LAPS-Enabled",
+                        "LDAP-Client-Signing-Required",
+                        "LLMNR-Disabled",
                         "Logs-Advanced-Workstation-Enabled",
-                        "Exploit-Guard-ASR-Enabled", "Exploit-Guard-CFA-Enabled", "Exploit-Guard-NP-Enabled",
-                        "RDP-Secure-Connection-Enabled"
+                        "LSA-Hardened",
+                        "mDNS-Disabled",
+                        "MSCache-Disabled",
+                        "MSCache-NLIterationCount-Hardened",
+                        "NTLM-Audit-Enabled",
+                        "NTLM-Disabled",
+                        "NTLM1-LM-Disabled",
+                        "NTLMv2-128bits-Required",
+                        "Powershell-Hardened",
+                        "RDP-hijacking-Mitigation",
+                        "RDP-Secure-Connection-Enabled",
+                        "Remote-Credential-Guard-Enabled",
+                        "RPC-Hardened",
+                        "Secure-NetLogon",
+                        "SMB-Client-Signing-Enabled",
+                        "SMB-Server-Signing-Enabled",
+                        "SMBv1-Disabled",
+                        "SSDP-Disabled",
+                        "TLS-Hardened",
+                        "UAC-Hardened",
+                        "UNC-Paths-Hardened",
+                        "VBS-Enabled",
+                        "Wdigest-Disabled",
+                        "WebProxyAutoDiscovery-Disabled",
+                        "WPAD-Computer-Disabled"
                     ]
                 },
                 "Users": {
-                    "_note": "Standard end-user accounts.",
+                    "_note": "Standard end-user accounts: UsersSide.",
                     "gpos": [
-                        "ScreenLock-enabled", "WPAD-User-Disabled", "Proxy-Change-Disabled",
-                        "WScript-Disabled", "UNC-Paths-Hardened"
+                        "Proxy-Change-Disabled",
+                        "ScreenLock-enabled",
+                        "WPAD-User-Disabled",
+                        "WScript-Disabled"
                     ]
                 },
                 "Admins": {
-                    "_note": "Tier 2 admin user accounts (helpdesk).",
+                    "_note": "Tier 2 admin user accounts (helpdesk): UsersSide.",
                     "gpos": [
-                        "ScreenLock-enabled", "WPAD-User-Disabled", "Proxy-Change-Disabled",
-                        "WScript-Disabled", "UNC-Paths-Hardened", "NTLM-Disabled"
+                        "Proxy-Change-Disabled",
+                        "ScreenLock-enabled",
+                        "WPAD-User-Disabled",
+                        "WScript-Disabled"
                     ]
                 }
             }
@@ -222,28 +353,48 @@
             "description": "Tier 1 Legacy (Legacy Administrative Servers)",
             "subOUs": {
                 "Servers": {
-                    "_note": "Legacy servers — same baseline as Tier 1, weaker hardening can be applied here if needed by overriding individual GPOs.",
+                    "_note": "Legacy servers: ComputerBase (VBS-Enabled excluded for compatibility) + ServersOnly.",
                     "gpos": [
-                        "IPv6-Disabled", "LLMNR-Disabled", "mDNS-Disabled", "SSDP-Disabled",
-                        "SMB-Server-Signing-Enabled", "SMB-Client-Signing-Enabled", "SMBv1-Disabled",
+                        "Bloodhound-Mitigation",
+                        "IPv6-Disabled",
+                        "Kerberos-AES-Enabled",
+                        "Kerberos-Armoring-Enabled",
                         "LDAP-Client-Signing-Required",
-                        "Wdigest-Disabled", "NTLM-Audit-Enabled", "NTLMv2-128bits-Required", "NTLM1-LM-Disabled",
-                        "Kerberos-AES-Enabled", "Kerberos-Armoring-Enabled",
-                        "LSA-Hardened", "TLS-Hardened", "RPC-Hardened",
-                        "Powershell-Hardened", "UAC-Hardened",
-                        "MSCache-Disabled", "MSCache-NLIterationCount-Hardened",
-                        "Bloodhound-Mitigation", "WPAD-Computer-Disabled", "WebProxyAutoDiscovery-Disabled",
-                        "Secure-NetLogon",
+                        "LLMNR-Disabled",
                         "Logs-Advanced-Server-Enabled",
-                        "RDP-Secure-Connection-Enabled", "RDP-hijacking-Mitigation",
-                        "Remote-Credential-Guard-Enabled"
+                        "LSA-Hardened",
+                        "mDNS-Disabled",
+                        "MSCache-Disabled",
+                        "MSCache-NLIterationCount-Hardened",
+                        "NTLM-Audit-Enabled",
+                        "NTLM-Disabled",
+                        "NTLM1-LM-Disabled",
+                        "NTLMv2-128bits-Required",
+                        "Powershell-Hardened",
+                        "RDP-hijacking-Mitigation",
+                        "RDP-Secure-Connection-Enabled",
+                        "Remote-Credential-Guard-Enabled",
+                        "RPC-Hardened",
+                        "Secure-NetLogon",
+                        "SMB-Client-Signing-Enabled",
+                        "SMB-Server-Signing-Enabled",
+                        "SMBv1-Disabled",
+                        "SSDP-Disabled",
+                        "TLS-Hardened",
+                        "UAC-Hardened",
+                        "UNC-Paths-Hardened",
+                        "Wdigest-Disabled",
+                        "WebProxyAutoDiscovery-Disabled",
+                        "WPAD-Computer-Disabled"
                     ]
                 },
                 "Admins": {
-                    "_note": "Tier 1 Legacy admin user accounts.",
+                    "_note": "Tier 1 Legacy admin user accounts: UsersSide.",
                     "gpos": [
-                        "ScreenLock-enabled", "WPAD-User-Disabled", "Proxy-Change-Disabled",
-                        "WScript-Disabled", "UNC-Paths-Hardened", "NTLM-Disabled"
+                        "Proxy-Change-Disabled",
+                        "ScreenLock-enabled",
+                        "WPAD-User-Disabled",
+                        "WScript-Disabled"
                     ]
                 }
             }
