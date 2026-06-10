@@ -115,7 +115,7 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 | [SMB-NTLM-Disabled](#smb-ntlm-disabled-windows-2025) | Level2025 | SMB client blocks NTLM | {EB9FE2D4-776F-45DB-92EA-FE19D42F03E7} | Yes |
 | [SMB-Server-Signing-Enabled](#smb-server-signing-enabled) | Common | Server signing if/always: Enabled | {26EB3D1F-4C89-40D1-A11E-2A4C8A31A669} | Yes |
 | [SMBv1-Disabled](#smbv1-disabled) | Common | HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters\SMB1 = 0 | {AE8DF7F8-5623-4C10-B6A7-C0E9BE598BB7} | Yes |
-| [SMBv3.1.1-Enforced](#smbv311-enforced) | Common | LanmanServer MinClientDialect = 0x0311; LanmanWorkstation MinClientDialect = 0x0311 | - | No |
+| [SMBv3.1.1-Enforced](#smbv311-enforced) | Common | LanmanServer MinClientDialect = 0x0311; LanmanWorkstation MinClientDialect = 0x0311 | {0CCD8804-42C1-41A4-80CC-2887480AB6CE} | Yes |
 | [SSDP-Disabled](#ssdp-disabled) | Common | SSDPSRV service: Disabled | {0FBBB029-356A-46F8-8158-5CB1C668EDAC} | Yes |
 | [TLS-Hardened](#tls-hardened) | Common | Disable SSL 3.0 and TLS 1.0/1.1 (Client/Server); set DisabledByDefault=1 | {C3114819-BA13-42DF-9123-049D7AFB83E7} | Yes |
 | [UAC-Hardened](#uac-hardened) | Common | EnableLUA=1; PromptOnSecureDesktop=1; FilterAdministratorToken=1; ConsentPromptBehaviorAdmin=2; ConsentPromptBehaviorUser=1; EnableVirtualization=1 | {950CB7EF-E5E4-4F22-834E-BB845BB33652} | Yes |
