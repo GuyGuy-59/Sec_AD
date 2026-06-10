@@ -46,6 +46,7 @@ This document catalogs the Group Policy Objects included in this repository. It 
   - SMB-Client-Signing-Enabled
   - SMB-Server-Signing-Enabled
   - SMBv1-Disabled
+  - SMBv3.1.1-Enforced
   - SSDP-Disabled
   - TLS-Hardened
   - UAC-Hardened
@@ -114,6 +115,7 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 | [SMB-NTLM-Disabled](#smb-ntlm-disabled-windows-2025) | Level2025 | SMB client blocks NTLM | {EB9FE2D4-776F-45DB-92EA-FE19D42F03E7} | Yes |
 | [SMB-Server-Signing-Enabled](#smb-server-signing-enabled) | Common | Server signing if/always: Enabled | {26EB3D1F-4C89-40D1-A11E-2A4C8A31A669} | Yes |
 | [SMBv1-Disabled](#smbv1-disabled) | Common | HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters\SMB1 = 0 | {AE8DF7F8-5623-4C10-B6A7-C0E9BE598BB7} | Yes |
+| [SMBv3.1.1-Enforced](#smbv311-enforced) | Common | LanmanServer MinClientDialect = 0x0311; LanmanWorkstation MinClientDialect = 0x0311 | - | No |
 | [SSDP-Disabled](#ssdp-disabled) | Common | SSDPSRV service: Disabled | {0FBBB029-356A-46F8-8158-5CB1C668EDAC} | Yes |
 | [TLS-Hardened](#tls-hardened) | Common | Disable SSL 3.0 and TLS 1.0/1.1 (Client/Server); set DisabledByDefault=1 | {C3114819-BA13-42DF-9123-049D7AFB83E7} | Yes |
 | [UAC-Hardened](#uac-hardened) | Common | EnableLUA=1; PromptOnSecureDesktop=1; FilterAdministratorToken=1; ConsentPromptBehaviorAdmin=2; ConsentPromptBehaviorUser=1; EnableVirtualization=1 | {950CB7EF-E5E4-4F22-834E-BB845BB33652} | Yes |
@@ -167,6 +169,7 @@ Note: The exact availability of some GPOs depends on your backup set. Always ver
 - SMB-NTLM-Disabled: Blocks NTLM (LM, NTLM, NTLMv2) authentication for SMB client connections (Windows 2025+).
 - SMB-Server-Signing-Enabled: Requires SMB signing on servers.
 - SMBv1-Disabled: Disables SMBv1 protocol via registry setting (SMB1 = 0).
+- SMBv3.1.1-Enforced: Enforces SMBv3.1.1 as the minimum dialect for both the SMB server and client, blocking older and weaker SMB dialect negotiations.
 - SSDP-Disabled: Disables SSDP/UPnP.
 - TLS-Hardened: Disables old SSL/TLS; enforces modern TLS versions 
 - UAC-Hardened: Tightens UAC prompts and elevation rules; enforces Secure Desktop.
@@ -828,6 +831,22 @@ Always validate in pre-production, monitor NTLM audit before enforcement, and te
   - **Category**: Network/SMB
   - **Compatibility**: Ensure all clients support SMBv2/v3 before enabling
   - **Supported**: Windows Server 2008+ and Windows 7+
+
+<a id="smbv311-enforced"></a>
+### SMBv3.1.1-Enforced
+
+- HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters\MinClientDialect = 0x0311
+- HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\MinClientDialect = 0x0311
+  - **Policy**: Enforce SMBv3.1.1 as the minimum SMB dialect
+  - **Description**: Prevents the SMB server and client from negotiating any dialect older than SMBv3.1.1, blocking SMBv1/v2/v2.1/v3.0/v3.0.2 connections
+  - **Registry Settings**:
+    - HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters\MinClientDialect = 0x0311
+    - HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\MinClientDialect = 0x0311
+  - **Impact**: Any client or server that does not support SMBv3.1.1 will be refused. Connections attempting to negotiate a lower dialect are rejected.
+  - **Security Benefit**: SMBv3.1.1 is the only SMB version that supports pre-authentication integrity (SHA-512) and AES-128-GCM encryption. Enforcing it eliminates dialect-downgrade attacks and ensures the strongest available SMB security.
+  - **Category**: Network/SMB
+  - **Compatibility**: Requires Windows 10 1607+ / Windows Server 2016+ on all SMB peers. Combine with SMBv1-Disabled and SMB-Client/Server-Signing-Enabled.
+  - **Note**: Must be deployed alongside SMBv1-Disabled. Verify all SMB-dependent applications and devices support SMBv3.1.1 before enforcing.
 
 <a id="ssdp-disabled"></a>
 ### SSDP-Disabled
